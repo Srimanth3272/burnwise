@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email.matches('.*admin@vitafit\\.ai')
+      );
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // 2. User Profiles collection
+    match /user_profiles/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // 3. Meal Logs collection
+    match /meal_logs/{logId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 4. Food Database (Public read, Admin write)
+    match /food_database/{foodId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 5. Curated Recipes (Public read, Admin write)
+    match /recipes/{recipeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 6. Exercise Library (Public read, Admin write)
+    match /exercise_library/{exerciseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 7. Workout Logs
+    match /workout_logs/{logId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 8. Hydration Logs
+    match /hydration_logs/{logId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 9. Sleep Logs
+    match /sleep_logs/{logId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 10. Grocery Lists
+    match /grocery_lists/{itemId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 11. Saved Recipes
+    match /saved_recipes/{saveId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 12. Progress Records
+    match /progress_records/{recordId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 13. Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // 14. User Feedback
+    match /user_feedback/{feedbackId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
